@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Create or clear output file
+> data.csv
+
+# Run for multiple tries and compute average
+TRIES=10
+WORKGROUPCOUNTER=1
+while [ $WORKGROUPCOUNTER -le 256 ]
+do
+    WORKGROUPSIZE=$(( WORKGROUPCOUNTER * 1 ))
+    ARRAYCOUNTER=1
+    while [ $ARRAYCOUNTER -le 8192 ]
+    do
+        SUM=0
+        ARRAYSIZE=$(( $ARRAYCOUNTER * 1024 ))
+        g++ main.cpp -DGLOBAL=${ARRAYSIZE} -DLOCAL=${WORKGROUPSIZE} -o main -lm -fopenmp # may need to be modified for your system
+        for TRY in $(seq ${TRIES})
+        do
+            OUTPUT=$(./main)
+            SUM=$(( (SUM + OUTPUT) ))
+        done
+        AVG=$(( SUM / TRIES ))
+        printf "$AVG" >> data.csv
+        printf ',' >> data.csv
+        ARRAYCOUNTER=$(( $ARRAYCOUNTER * 2 ))
+    done
+    echo >> data.csv
+    WORKGROUPCOUNTER=$(( $WORKGROUPCOUNTER * 2 ))
+done
